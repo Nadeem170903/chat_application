@@ -1,35 +1,36 @@
-const Chat = require('../models/chat')
-const Message = require('../models/message');
+const Chat = require('../models/chat.modle')
+const Message = require('../models/message.modle');
 const mongoose = require('mongoose')
 
 
 
 
 module.exports.findOrCreateChat = async (req, res) => {
-    const { userId1, userId2 } = req.body;
-    console.log('creact chat route',userId1,"and ",userId2);
+    const { senderId, receiverId } = req.body;
+    console.log('creact chat route',senderId,"and ",receiverId);
 
     try {
         // Check if a chat already exists between these two users
         let chat = await Chat.findOne({
-            participants: { $all: [userId1, userId2] },
+            participants: { $all: [senderId, receiverId] },
         });
 
         // If no chat exists, create a new one
         if (!chat) {
-            
-            chat = new Chat({
-                participants: [userId1, userId2],
+            chat = await Chat.create({
+                participants: [senderId, receiverId],
             });
-            console.log('chat created');
-            await chat.save();
+            console.log('chat created',chat);
         }
 
         // Return the chat ID
-        res.status(200).json({ chatId: chat._id });
+        res.status(200).json({
+          message:"chate created or open",
+          chatInfo: chat
+        });
     } catch (error) {
-        console.error("Error finding or creating chat:", error);
-        res.status(500).json({ error: 'Error finding or creating chat' });
+        console.error("Error finding in creating chat:", error.message);
+        res.status(500).json({ error: 'sorry some technical error please try some time later' });
     }
 };
 
