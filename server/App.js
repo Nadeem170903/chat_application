@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 // Attach routes
 const authRout = require('./Routes/auth.routes');
 const chatRout = require('./Routes/chats.routes');
+const fetchAllUser = require('./Routes/fetchAllUser.routes')
 const app = express();
 
 // Middleware
@@ -25,6 +26,7 @@ app.get('/',(req,res)=>{
 // routes call
 app.use('/api/auth', authRout);
 app.use('/api/chat', chatRout);
+app.use('/api',fetchAllUser);
 
 
 
