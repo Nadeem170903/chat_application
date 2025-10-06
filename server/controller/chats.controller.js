@@ -38,31 +38,74 @@ module.exports.findOrCreateChat = async (req, res) => {
 // POST /api/messages
 module.exports.addMessage = async (req, res) => {
     const { chatId, senderId, messageContent, receiverId, messageData } = req.body;
-    console.log('this is messageData',)
+   
 
     try {
-        const message = new Message({
+        const message = await  Message.create({
             sender: senderId,
             message: messageContent,
             receiver: receiverId,
         });
 
-        await message.save();
+         console.log('this is messageData',message)
+
+        
 
         await Chat.findByIdAndUpdate(chatId, {
             $push: { conversation: message._id },
             updatedAt: Date.now(),
         });
 
-        const io = req.app.get('socketio'); // Get Socket.IO instance
-        io.to(chatId).emit('receiveMessage', message); // Emit message to the chat room
+        // const io = req.app.get('socketio'); // Get Socket.IO instance
+        // io.to(chatId).emit('receiveMessage', message); // Emit message to the chat room
 
-        res.status(200).json(message);
+        res.status(200).json({message});
     } catch (error) {
         console.error("Error sending message:", error);
         res.status(500).json({ error: 'Error sending message' });
     }
 };
+
+// Delete message
+module.exports.deleteMessage = async(req,res)=>{
+  const {senderId,chatId , messageId} = req.body;
+  try{
+    const message = await Message.findById(messageId);
+  
+
+    if(!message){
+      return res.status(400).json({
+        message:"Message Not found"
+      })
+    }
+
+    // check person is authorized for deletion or not
+    if(message.sender.toString() !== senderId){
+      return res.status(401).json({
+        message:"You are not authorized to delete this message"
+      })
+    }
+
+    await Message.findByIdAndDelete(messageId);
+
+    // update chats after delete message
+    await Chat.findByIdAndUpdate(chatId,{
+      $pull:{conversation:messageId},
+      updatedAt:Date.now()
+    });
+
+    res.status(200).json({
+      success:true,
+      message:"This message is deleted"
+    })
+  } catch(e){
+    res.status(201).json({
+      success:false,
+      message:"Something error here"
+    })
+  }
+
+}
 
 
 // GET /api/messages
